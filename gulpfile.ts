@@ -7,17 +7,17 @@
 */
 
 var gulp = require('gulp'); 
-var execSync = require('child_process').execSync;
+var exec = require('child_process').exec;
 var fs = require('fs');
 
-const hemlDirectory = process.env['CHART'];
+const hemlDir = process.env['CHART'];
 const values = process.env['VALUES'];
 
-gulp.task( 'default', function( cb : any )
+gulp.task( 'default', async () =>
 	{
-		gulp.watch( `${hemlDirectory}/**`,
+		gulp.watch( `${hemlDir}/**`,
 			{ ignoreInitial: false },
-			function( cb : any )
+			async () =>
 			{
 				var cmd = 'helm template';
 				if (values)
@@ -26,12 +26,10 @@ gulp.task( 'default', function( cb : any )
 						cmd += ` --values=#=${v}`;
 					});
 				}
-				cmd += ` ${hemlDirectory}/.`;
-				var tmpl = execSync( cmd ).toString();
-				fs.writeFileSync( `${hemlDirectory}/../tmpl.yaml`, tmpl );
-				cb();
+				cmd += ` ${hemlDir}/.`;
+				const tmpl = await exec( cmd ).toString();
+				await fs.promises.writeFile( `${hemlDir}/../tmpl.yaml`, tmpl );
 			}
 		);
-		cb();
 	}
 );
