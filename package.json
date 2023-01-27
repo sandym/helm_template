@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "gulp": "^4.0.2",
+    "ts-node": "^10.9.1"
+  }
+}
