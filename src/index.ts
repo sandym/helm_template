@@ -16,20 +16,29 @@ const values = process.env['VALUES'];
 const watcher = chokidar.watch(`${hemlDir}/**`, {
 	persistent: true
 });
-  
+
+var inProgress = false;
 watcher.on('all',
 	async () =>
 	{
-		await fs.promises.writeFile( `${hemlDir}/../tmpl.yaml`, '' );
-		var cmd = 'helm template';
-		if (values)
+		if (inProgress)
+			return;
+		inProgress = true;
+
+		setTimeout(() =>
 		{
-			values.split(',').forEach( (v) => {
-				cmd += ` --values=${hemlDir}/${v}`;
-			});
-		}
-		cmd += ` ${hemlDir}/.`;
-		const tmpl = execSync( cmd ).toString();
-		await fs.promises.writeFile( `${hemlDir}/../tmpl.yaml`, tmpl );
+			fs.writeFileSync( `${hemlDir}/../tmpl.yaml`, '' );
+			var cmd = 'helm template';
+			if (values)
+			{
+				values.split(',').forEach( (v) => {
+					cmd += ` --values=${hemlDir}/${v}`;
+				});
+			}
+			cmd += ` ${hemlDir}/.`;
+			const tmpl = execSync( cmd ).toString();
+			fs.writeFileSync( `${hemlDir}/../tmpl.yaml`, tmpl );
+			inProgress = false;
+		}, 100 );
 	}
 );
