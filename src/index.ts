@@ -39,8 +39,15 @@ watcher.on( 'all',
 				}
 				cmd += ` ${hemlDir}/.`;
 				console.log( `RUNNING: ${cmd}` );
-				const tmpl = execSync( cmd ).toString();
-				fs.writeFileSync( `${hemlDir}/../tmpl.yaml`, tmpl );
+				try
+				{
+					const tmpl = execSync( cmd ).toString();
+					fs.writeFileSync( `${hemlDir}/../tmpl.yaml`, tmpl );
+				}
+				catch ( err )
+				{
+					console.log( err.message );
+				}
 				inProgress = false;
 			}, 100
 		);
