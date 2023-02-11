@@ -3,7 +3,7 @@
 	file edit. Just look at `tmpl.yaml` to see real-time manifest updates.
 
     start:
-		CHART={helm chart path} VALUES={values yaml} npm run watch
+		CHART={helm chart path} VALUES={values yaml} npm start
 */
 
 const chokidar = require( 'chokidar' );
@@ -32,23 +32,28 @@ watcher.on( 'all',
 			() =>
 			{
 				fs.writeFileSync( tmplFile, '' );
-				var cmd = 'helm template';
+				var tmplCmd = 'helm template';
+				var lintCmd = 'helm lint';
 				if ( values )
 				{
 					values.split( ',' ).forEach( ( v ) => {
-						cmd += ` --values ${hemlDir}/${v}`;
+						tmplCmd += ` --values ${hemlDir}/${v}`;
+						lintCmd += ` --values ${hemlDir}/${v}`;
 					});
 				}
 				if ( instance )
 				{
-					cmd += ` --name-template ${instance}`;
+					tmplCmd += ` --name-template ${instance}`;
 				}
-				cmd += ` ${hemlDir}/.`;
-				console.log( `RUNNING: ${cmd}` );
+				tmplCmd += ` ${hemlDir}/.`;
+				lintCmd += ` ${hemlDir}/.`;
+				console.log( `RUNNING: ${tmplCmd}` );
 				try
 				{
-					const tmpl = execSync( cmd ).toString();
+					const tmpl = execSync( tmplCmd ).toString();
 					fs.writeFileSync( tmplFile, tmpl );
+					const lint = execSync( lintCmd ).toString();
+					fs.appendFileSync( tmplFile, lint );
 				}
 				catch ( err )
 				{

@@ -14,7 +14,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "watch": "tsc-watch --onsuccess \"node dist/index.js\""
+    "watch": "tsc-watch --onsuccess \"node dist/index.js\"",
+	"start": "ts-node src/index.ts"
   },
   "repository": {
     "type": "git",
