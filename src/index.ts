@@ -12,6 +12,8 @@ const fs = require( 'fs' );
 
 const hemlDir = process.env['CHART'];
 const values = process.env['VALUES'];
+const instance = process.env['INSTANCE'];
+const tmplFile = `${hemlDir}/../tmpl.yaml`;
 
 const watcher = chokidar.watch(
 	`${hemlDir}/**`,
@@ -29,20 +31,24 @@ watcher.on( 'all',
 		setTimeout(
 			() =>
 			{
-				fs.writeFileSync( `${hemlDir}/../tmpl.yaml`, '' );
+				fs.writeFileSync( tmplFile, '' );
 				var cmd = 'helm template';
-				if (values)
+				if ( values )
 				{
-					values.split(',').forEach( ( v ) => {
-						cmd += ` --values=${hemlDir}/${v}`;
+					values.split( ',' ).forEach( ( v ) => {
+						cmd += ` --values ${hemlDir}/${v}`;
 					});
+				}
+				if ( instance )
+				{
+					cmd += ` --name-template ${instance}`;
 				}
 				cmd += ` ${hemlDir}/.`;
 				console.log( `RUNNING: ${cmd}` );
 				try
 				{
 					const tmpl = execSync( cmd ).toString();
-					fs.writeFileSync( `${hemlDir}/../tmpl.yaml`, tmpl );
+					fs.writeFileSync( tmplFile, tmpl );
 				}
 				catch ( err )
 				{
