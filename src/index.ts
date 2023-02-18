@@ -1,9 +1,6 @@
 /*
 	Helper script to work on a helm chart. It runs `helm template` on every
 	file edit. Just look at `tmpl.yaml` to see real-time manifest updates.
-
-    start:
-		CHART={helm chart path} VALUES={values yaml} npm start
 */
 
 const chokidar = require( 'chokidar' );
