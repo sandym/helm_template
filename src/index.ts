@@ -52,8 +52,14 @@ watcher.on( 'all',
 				{
 					const tmpl = execSync( tmplCmd ).toString();
 					fs.writeFileSync( tmplFile, tmpl );
-					const lint = execSync( lintCmd ).toString();
-					fs.appendFileSync( tmplFile, lint );
+					const lint = execSync( lintCmd ).toString().split(/\r?\n/);
+					lint.forEach( function(part, index)
+						{
+							this[index] = `# ${part}`;
+						}, lint );
+					lint.unshift( '####', '#' );
+					lint.push( '####' );
+					fs.appendFileSync( tmplFile, lint.join('\n') );
 				}
 				catch ( err )
 				{
