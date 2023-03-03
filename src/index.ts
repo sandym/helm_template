@@ -7,10 +7,14 @@ const chokidar = require( 'chokidar' );
 const execSync = require( 'child_process' ).execSync;
 const fs = require( 'fs' );
 
-const hemlDir = process.env['CHART'];
-const values = process.env['VALUES'];
-const instance = process.env['INSTANCE'];
+const hemlDir = process.argv.pop();
 const tmplFile = `${hemlDir}/../tmpl.yaml`;
+
+var args = ' ';
+process.argv.slice( 2 ).forEach((arg : string) =>
+{
+	args += ` '${arg}'`;
+});
 
 const watcher = chokidar.watch(
 	`${hemlDir}/**`,
@@ -31,19 +35,8 @@ watcher.on( 'all',
 				fs.writeFileSync( tmplFile, '' );
 				var tmplCmd = 'helm template';
 				var lintCmd = 'helm lint';
-				if ( values )
-				{
-					values.split( ',' ).forEach( ( v ) => {
-						tmplCmd += ` --values ${hemlDir}/${v}`;
-						lintCmd += ` --values ${hemlDir}/${v}`;
-					});
-				}
-				if ( instance )
-				{
-					tmplCmd += ` --name-template ${instance}`;
-				}
-				tmplCmd += ` ${hemlDir}/.`;
-				lintCmd += ` ${hemlDir}/.`;
+				tmplCmd += `${args} ${hemlDir}/.`;
+				lintCmd += `${args} ${hemlDir}/.`;
 				console.log( `RUNNING: ${tmplCmd}` );
 				try
 				{

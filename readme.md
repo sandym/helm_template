@@ -9,7 +9,7 @@ npm install
 
 Run:
 ```
-CHART={helm chart path} VALUES={values yaml} INSTANCE={Release Name} npm start
+npm start --values {values yaml} --name-template {instance} {helm chart path}
 ```
 
 It will run `helm template` on each file edit and put the result in a file named
