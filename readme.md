@@ -2,6 +2,9 @@
 
 ## Helper to work with helm charts interactively.
 
+Helper app to work on a helm chart. It runs `helm template` on every
+file edit. Just look at `tmpl.yaml` to see real-time manifest updates.
+
 Setup:
 ```
 npm install
