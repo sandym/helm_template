@@ -1,62 +1,88 @@
-/*
-	Helper script to work on a helm chart. It runs `helm template` on every
-	file edit. Just look at `tmpl.yaml` to see real-time manifest updates.
-*/
+#!/usr/bin/env node
 
-const chokidar = require( 'chokidar' );
-const execSync = require( 'child_process' ).execSync;
-const fs = require( 'fs' );
+import { Command } from 'commander';
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import watcher from '@parcel/watcher';
 
-const hemlDir = process.argv.pop();
-const tmplFile = `${hemlDir}/../tmpl.yaml`;
+const program = new Command();
 
-var args = ' ';
-process.argv.slice( 2 ).forEach((arg : string) =>
-{
-	args += ` '${arg}'`;
-});
+function collect(value : string, previous : string[]) {
+  return previous.concat([value]);
+}
 
-const watcher = chokidar.watch(
-	`${hemlDir}/**`,
-	{ persistent: true }
-);
+program
+  .description('Run `helm template` command on file edit.')
+  .option('--values <values>', 'YAML values file', collect, [])
+  .option('--set <set>', 'Single value to set', collect, [])
+  .option('--namespace <namespace>', 'Single value to set')
+  .argument('<chart>', 'helm chart path');
 
-var inProgress = false;
-watcher.on( 'all',
-	() =>
-	{
-		if ( inProgress )
-			return;
-		inProgress = true;
+program.parse();
 
-		setTimeout(
-			() =>
+const options = program.opts();
+
+// find output file path
+const chartPath = program.args[0] as string;
+const fileOutput = path.dirname(chartPath) + '/output.yaml';
+
+// build the commands
+let templateCmd = 'helm template ';
+let lintCmd = 'helm lint ';
+if (options.values) {
+  options.values.forEach((value : String) => {
+	templateCmd += `--values ${value} `;
+	lintCmd += `--values ${value} `;
+  });
+}
+if (options.set) {
+  options.set.forEach((value : String) => {
+	templateCmd += `--set ${value} `;
+	lintCmd += `--set ${value} `;
+  });
+}
+if (options.namespace) {
+  templateCmd += `--namespace ${options.namespace} `;
+  lintCmd += `--namespace ${options.namespace} `;
+}
+templateCmd += chartPath;
+lintCmd += chartPath;
+
+console.log(`Running command: ${templateCmd}`);
+console.log(`Output will be saved to: ${fileOutput}`);
+
+// execute the command
+function runCommand() {
+  try {
+	const output = execSync(templateCmd, { stdio: 'inherit' }).toString();
+	fs.writeFileSync( fileOutput, output );
+	const lint = execSync( lintCmd ).toString().split(/\r?\n/);
+	lint.forEach( (part, index) =>
 			{
-				fs.writeFileSync( tmplFile, '' );
-				var tmplCmd = 'helm template';
-				var lintCmd = 'helm lint';
-				tmplCmd += `${args} ${hemlDir}/.`;
-				lintCmd += `${args} ${hemlDir}/.`;
-				console.log( `RUNNING: ${tmplCmd}` );
-				try
-				{
-					const tmpl = execSync( tmplCmd ).toString();
-					fs.writeFileSync( tmplFile, tmpl );
-					const lint = execSync( lintCmd ).toString().split(/\r?\n/);
-					lint.forEach( function(part, index)
-						{
-							this[index] = `# ${part}`;
-						}, lint );
-					lint.unshift( '####', '#' );
-					lint.push( '####' );
-					fs.appendFileSync( tmplFile, lint.join('\n') );
-				}
-				catch ( err )
-				{
-					console.log( err.message );
-				}
-				inProgress = false;
-			}, 100
-		);
-	}
-);
+				lint[index] = `# ${part}`;
+			}, lint );
+	lint.unshift( '####', '#' );
+	lint.push( '####' );
+	fs.appendFileSync( fileOutput, lint.join('\n') );	
+  } catch (error) {
+	console.error(`Error executing command: ${error}`);
+  }
+}
+
+runCommand();
+
+// watch chartPath
+let inProgress = false;
+let subscription = await watcher.subscribe(chartPath,
+	(err, events) => {
+	    if ( inProgress )
+            return;
+		inProgress = true;
+		// console.log(events);
+		setTimeout( () => {
+			console.log(`Detected changes in ${chartPath}. Re-running command...`);
+			runCommand();
+			inProgress = false;
+		}, 100);
+});
