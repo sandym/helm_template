@@ -55,7 +55,7 @@ console.log(`Output will be saved to: ${fileOutput}`);
 // execute the command
 function runCommand() {
   try {
-	const output = execSync(templateCmd, { stdio: 'inherit' }).toString();
+	const output = execSync(templateCmd).toString();
 	fs.writeFileSync( fileOutput, output );
 	const lint = execSync( lintCmd ).toString().split(/\r?\n/);
 	lint.forEach( (part, index) =>
