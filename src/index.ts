@@ -20,11 +20,10 @@ program
   .argument('<chart>', 'helm chart path');
 
 program.parse();
-
 const options = program.opts();
 
 // find output file path
-const chartPath = program.args[0] as string;
+const chartPath = path.resolve(program.args[0] as string);
 const fileOutput = path.dirname(chartPath) + '/output.yaml';
 
 // build the commands
